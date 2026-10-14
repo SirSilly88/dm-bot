@@ -217,6 +217,40 @@ function dispatch(payload) {
   return jobs;
 }
 
+// ---------- public policy pages (required by Meta to publish the app) ----------
+
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'signupwithtom@gmail.com';
+const page = (title, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title>
+<style>body{font:16px/1.6 -apple-system,system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 16px;color:#222}h1{font-size:28px}h2{font-size:19px;margin-top:28px}</style>
+</head><body><h1>${title}</h1>${body}<p style="margin-top:40px;color:#777">Last updated October 14, 2026</p></body></html>`;
+
+const PRIVACY_HTML = page('Privacy Policy: Tom Swoope DM Bot', `
+<p>Tom Swoope DM Bot is an automated assistant for the Facebook Pages and Instagram accounts run by Tom Swoope
+(including First Off In My Opinion, Tom Swoope Events and Taking Care Of Family). When you comment a keyword on one of
+our posts or send us a keyword in a direct message, the bot replies with the link you asked for.</p>
+<h2>What we receive</h2>
+<p>Meta sends us the text of the comment or message, your public name or username, and the ID Meta assigns to you for our
+Page or account. We only use it to decide whether your message contains a keyword and to send you the matching reply.</p>
+<h2>What we store</h2>
+<p>Nothing is saved to a database. Comment and message IDs are held in memory for up to 7 days only to avoid sending you the
+same reply twice, and are erased whenever the service restarts. Server logs that may include the text of a keyword message
+are kept by our host for a short period and are not used for anything else.</p>
+<h2>What we share</h2>
+<p>We do not sell, rent or share your information with anyone. Replies are sent through Meta's own messaging platform.</p>
+<h2>Your choices</h2>
+<p>You can stop interacting with the bot at any time. To ask for any data about you to be deleted, see our
+<a href="/data-deletion">data deletion instructions</a> or email <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>`);
+
+const DELETION_HTML = page('Data Deletion: Tom Swoope DM Bot', `
+<p>Tom Swoope DM Bot does not keep a database of users. The only information it holds is temporary (comment and message IDs
+kept in memory for up to 7 days to prevent duplicate replies), and it is erased automatically.</p>
+<h2>To request deletion</h2>
+<p>Email <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a> with the subject "Data deletion request" and your Facebook or
+Instagram name. We will delete anything associated with you within 30 days and confirm by email.</p>
+<p>You can also remove the conversation from your own inbox at any time in Messenger or Instagram, and you can delete
+any comment you left on our posts.</p>`);
+
 // ---------- HTTP ----------
 
 function validSignature(raw, header) {
@@ -231,6 +265,12 @@ export const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
 
   if (req.method === 'GET' && url.pathname === '/') { res.end('ok'); return; }
+
+  if (req.method === 'GET' && (url.pathname === '/privacy' || url.pathname === '/data-deletion')) {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(url.pathname === '/privacy' ? PRIVACY_HTML : DELETION_HTML);
+    return;
+  }
 
   if (req.method === 'GET' && url.pathname === '/webhook') {
     const q = url.searchParams;
