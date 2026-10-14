@@ -11,23 +11,23 @@ const GRAPH = `https://graph.facebook.com/${process.env.GRAPH_VERSION || 'v23.0'
 const wanted = process.argv.slice(2);
 if (!wanted.length) { console.error('Name the Pages, e.g. node tokens.mjs "My Page" "Other Page"'); process.exit(1); }
 
-// Read a line without echoing it to the screen.
-function askHidden(prompt) {
+// Wait for Return, then read the value from the clipboard (nothing to paste, nothing shown).
+// Keeps asking until the clipboard holds something that looks right.
+function waitForReturn() {
   return new Promise(resolve => {
-    process.stdout.write(prompt);
     const { stdin } = process;
-    stdin.setRawMode(true); stdin.resume(); stdin.setEncoding('utf8');
-    let value = '';
-    const onData = chunk => {
-      for (const ch of chunk) {
-        if (ch === '\r' || ch === '\n') { stdin.setRawMode(false); stdin.pause(); stdin.off('data', onData); process.stdout.write(' ✔\n'); return resolve(value.trim()); }
-        if (ch === '\u0003') { process.stdout.write('\n'); process.exit(130); }
-        if (ch === '\u007f') { value = value.slice(0, -1); continue; }
-        value += ch;
-      }
-    };
-    stdin.on('data', onData);
+    stdin.resume(); stdin.setEncoding('utf8');
+    stdin.once('data', () => { stdin.pause(); resolve(); });
   });
+}
+async function askClipboard(what, looksRight) {
+  for (;;) {
+    process.stdout.write(`\n👉 Copy the ${what}, then click here and press Return. `);
+    await waitForReturn();
+    const value = execFileSync('pbpaste', { encoding: 'utf8' }).trim();
+    if (looksRight(value)) { console.log(`   ✔ Got the ${what} (${value.length} characters).`); return value; }
+    console.log(`   ✘ Your clipboard doesn't look like the ${what} yet. Copy it again and press Return.`);
+  }
 }
 
 async function get(pathname, params) {
@@ -39,8 +39,8 @@ async function get(pathname, params) {
 const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
 try {
-  const appSecret = process.env.APP_SECRET || await askHidden('Paste the App secret, then press Return: ');
-  const shortToken = await askHidden('Paste the Graph API Explorer token, then press Return: ');
+  const appSecret = process.env.APP_SECRET || await askClipboard('App secret', v => /^[0-9a-f]{32}$/i.test(v));
+  const shortToken = await askClipboard('Graph API Explorer token', v => /^EA[A-Za-z0-9]{50,}$/.test(v));
 
   // 1. Short-lived user token → 60-day user token. Page tokens fetched with it never expire.
   const { access_token: longToken } = await get('oauth/access_token', {
