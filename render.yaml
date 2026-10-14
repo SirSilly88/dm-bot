@@ -11,6 +11,8 @@ services:
         generateValue: true
       - key: GRAPH_VERSION
         value: v23.0
+      - key: APP_ID
+        value: "1146180881120023"
       # Filled in by you in the Render dashboard (never committed):
       - key: APP_SECRET
         sync: false

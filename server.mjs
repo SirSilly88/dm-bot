@@ -58,8 +58,30 @@ async function loadAccounts() {
       addAccount({ token, pageId: me.id, pageName: me.name, igId: ig?.id, igUsername: ig?.username });
       console.log(`[setup] Page: ${me.name} (${me.id}) · Instagram: ${ig ? `@${ig.username} (${ig.id})` : 'not linked'}`);
     } catch (e) {
-      console.error(`[setup] a Page token failed (…${token.slice(-6)}): ${e.message}`);
+      console.warn(`[setup] Page lookup failed for token …${token.slice(-6)} (${e.message.slice(0, 90)}…), trying debug_token`);
+      await addAccountFromDebugToken(token);
     }
+  }
+}
+
+// Fallback when the Page token can't read its own Page (e.g. pages_read_engagement not granted):
+// debug_token, called with the app token, still tells us the Page ID, linked IG IDs and granted scopes.
+async function addAccountFromDebugToken(token) {
+  const { APP_ID } = process.env;
+  if (!APP_ID || !APP_SECRET) { console.error('[setup] set APP_ID and APP_SECRET to use the debug_token fallback'); return; }
+  try {
+    const q = new URLSearchParams({ input_token: token, access_token: `${APP_ID}|${APP_SECRET}` });
+    const { data, error } = await (await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/debug_token?${q}`)).json();
+    if (error) throw new Error(error.message);
+    if (!data?.is_valid) throw new Error(`token not valid${data?.error?.message ? `: ${data.error.message}` : ''}`);
+    const pageId = data.profile_id;
+    const igIds = (data.granular_scopes || []).filter(s => s.scope.startsWith('instagram_')).flatMap(s => s.target_ids || []);
+    const igId = [...new Set(igIds)].length === 1 ? igIds[0] : undefined;
+    addAccount({ token, pageId, igId });
+    console.log(`[setup] Page ${pageId} · Instagram: ${igId || (igIds.length ? `ambiguous (${[...new Set(igIds)].join(', ')})` : 'none granted')}`);
+    console.log(`[setup]   scopes on this token: ${(data.scopes || []).join(', ')}`);
+  } catch (e) {
+    console.error(`[setup] debug_token failed for token …${token.slice(-6)}: ${e.message}`);
   }
 }
 
