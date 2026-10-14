@@ -17,20 +17,35 @@ const {
   VERIFY_TOKEN,
   APP_SECRET,
   PAGE_ACCESS_TOKEN,
-  PAGE_ID,
-  IG_USER_ID,
   GRAPH_VERSION = 'v23.0',
   DRY_RUN = '',
   KEYWORDS_FILE = path.join(HERE, 'keywords.json'),
 } = process.env;
+// Optional: looked up from the Page token at startup when not set.
+let { PAGE_ID, IG_USER_ID } = process.env;
 
 const dryRun = DRY_RUN === '1' || DRY_RUN === 'true';
 if (!VERIFY_TOKEN && !dryRun) { console.error('Missing VERIFY_TOKEN'); process.exit(1); }
 // The rest can arrive later (e.g. after the webhook is verified). Until then:
 // no APP_SECRET → every POST is rejected; no token/page → events are logged, nothing is sent.
-const canSend = Boolean(PAGE_ACCESS_TOKEN && PAGE_ID);
-for (const [k, v] of Object.entries({ APP_SECRET, PAGE_ACCESS_TOKEN, PAGE_ID, IG_USER_ID })) {
+const canSend = () => Boolean(PAGE_ACCESS_TOKEN && PAGE_ID);
+for (const [k, v] of Object.entries({ APP_SECRET, PAGE_ACCESS_TOKEN })) {
   if (!v && !dryRun) console.warn(`[setup] ${k} not set yet`);
+}
+
+async function discoverIds() {
+  if (dryRun || !PAGE_ACCESS_TOKEN || (PAGE_ID && IG_USER_ID)) return;
+  try {
+    const q = new URLSearchParams({ fields: 'id,name,instagram_business_account{id,username}', access_token: PAGE_ACCESS_TOKEN });
+    const me = await (await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me?${q}`)).json();
+    if (me.error) throw new Error(me.error.message);
+    PAGE_ID ||= me.id;
+    IG_USER_ID ||= me.instagram_business_account?.id;
+    const ig = me.instagram_business_account;
+    console.log(`[setup] Page: ${me.name} (${PAGE_ID}) · Instagram: ${ig ? `@${ig.username} (${IG_USER_ID})` : 'not linked'}`);
+  } catch (e) {
+    console.error(`[setup] could not look up Page/IG from token: ${e.message}`);
+  }
 }
 
 // ---------- keyword rules (re-read on change, no restart needed) ----------
@@ -80,7 +95,7 @@ const DAY = 86_400_000;
 
 async function graph(pathname, body) {
   const url = `https://graph.facebook.com/${GRAPH_VERSION}/${pathname}`;
-  if (dryRun || !canSend) { console.log(`[${dryRun ? 'dry-run' : 'not-sent: no token'}] POST ${pathname} ${JSON.stringify(body)}`); return { dryRun: true }; }
+  if (dryRun || !canSend()) { console.log(`[${dryRun ? 'dry-run' : 'not-sent: no token'}] POST ${pathname} ${JSON.stringify(body)}`); return { dryRun: true }; }
   const res = await fetch(`${url}?access_token=${encodeURIComponent(PAGE_ACCESS_TOKEN)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -201,4 +216,5 @@ export const server = http.createServer((req, res) => {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   server.listen(PORT, () => console.log(`DM bot listening on :${PORT}${dryRun ? ' (DRY RUN, nothing is sent)' : ''}`));
+  discoverIds();
 }
