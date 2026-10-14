@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "keyword": "GUIDE",
+      "aliases": ["the guide"],
+      "match": "contains",
+      "link": "https://example.com/REPLACE-ME",
+      "message": "Hey {name}! Here's the link you asked for 👇\n{link}",
+      "publicReply": "Sent! Check your DMs 📩",
+      "triggers": ["comment", "dm"],
+      "platforms": ["facebook", "instagram"],
+      "postIds": [],
+      "cooldownMinutes": 10,
+      "enabled": true
+    },
+    {
+      "keyword": "TICKETS",
+      "match": "contains",
+      "link": "https://example.com/REPLACE-ME-TOO",
+      "message": "Here are the tickets 🎟️\n{link}",
+      "publicReply": "Check your DMs!",
+      "triggers": ["comment", "dm"],
+      "platforms": ["facebook", "instagram"],
+      "postIds": [],
+      "enabled": false
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "dm-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Keyword → DM link automation for Facebook Pages and Instagram",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --env-file=.env server.mjs",
+    "test": "node test.mjs",
+    "check": "node --env-file=.env setup.mjs check",
+    "subscribe": "node --env-file=.env setup.mjs subscribe"
+  }
+}
