@@ -15,12 +15,13 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const {
   PORT = 3000,
   VERIFY_TOKEN,
-  APP_SECRET,
   GRAPH_VERSION = 'v23.0',
   DRY_RUN = '',
   KEYWORDS_FILE = path.join(HERE, 'keywords.json'),
 } = process.env;
 
+// Trimmed: a stray space or new line from copy/paste would break every signature check.
+const APP_SECRET = process.env.APP_SECRET?.trim();
 const dryRun = DRY_RUN === '1' || DRY_RUN === 'true';
 if (!VERIFY_TOKEN && !dryRun) { console.error('Missing VERIFY_TOKEN'); process.exit(1); }
 // The rest can arrive later (e.g. after the webhook is verified). Until then:
@@ -67,7 +68,7 @@ async function loadAccounts() {
 // Fallback when the Page token can't read its own Page (e.g. pages_read_engagement not granted):
 // debug_token, called with the app token, still tells us the Page ID, linked IG IDs and granted scopes.
 async function addAccountFromDebugToken(token) {
-  const { APP_ID } = process.env;
+  const APP_ID = process.env.APP_ID?.trim();
   if (!APP_ID || !APP_SECRET) { console.error('[setup] set APP_ID and APP_SECRET to use the debug_token fallback'); return; }
   try {
     const q = new URLSearchParams({ input_token: token, access_token: `${APP_ID}|${APP_SECRET}` });
