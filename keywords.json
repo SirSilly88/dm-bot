@@ -10,6 +10,7 @@
       "triggers": ["comment", "dm"],
       "platforms": ["facebook", "instagram"],
       "postIds": [],
+      "accounts": [],
       "cooldownMinutes": 10,
       "enabled": true
     },
@@ -22,6 +23,7 @@
       "triggers": ["comment", "dm"],
       "platforms": ["facebook", "instagram"],
       "postIds": [],
+      "accounts": ["Tom Swoope Events"],
       "enabled": false
     }
   ]

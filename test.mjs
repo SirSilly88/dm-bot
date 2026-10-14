@@ -15,10 +15,15 @@ fs.writeFileSync(kwFile, JSON.stringify({ rules: [
   { keyword: 'GUIDE', match: 'contains', link: 'https://example.com/guide', message: 'Hi {name} {link}', publicReply: 'Check DMs', triggers: ['comment', 'dm'] },
   { keyword: 'VIP', match: 'exact', link: 'https://example.com/vip', message: '{link}', triggers: ['dm'], platforms: ['instagram'] },
   { keyword: 'PROMO', match: 'contains', link: 'https://example.com/p', message: '{link}', triggers: ['comment'], postIds: ['media_1'] },
+  { keyword: 'BINGO', match: 'contains', link: 'https://example.com/bingo', message: '{link}', accounts: ['Tom Swoope Events'] },
 ] }));
 
 const proc = spawn(process.execPath, [path.join(HERE, 'server.mjs')], {
-  env: { ...process.env, PORT, DRY_RUN: '1', APP_SECRET: SECRET, VERIFY_TOKEN: 'vt', PAGE_ID: 'PAGE', IG_USER_ID: 'IGME', KEYWORDS_FILE: kwFile },
+  env: { ...process.env, PORT, DRY_RUN: '1', APP_SECRET: SECRET, VERIFY_TOKEN: 'vt', KEYWORDS_FILE: kwFile,
+    DRY_RUN_ACCOUNTS: JSON.stringify([
+      { pageId: 'PAGE', pageName: 'First Off In My Opinion', igId: 'IGME', igUsername: 'firstoffinmyopinion' },
+      { pageId: 'PAGE2', pageName: 'Tom Swoope Events', igId: 'IG2', igUsername: 'tomswoopeevents' },
+    ]) },
 });
 let out = '';
 proc.stdout.on('data', d => out += d); proc.stderr.on('data', d => out += d);
@@ -40,9 +45,9 @@ async function check(name, fn, expect) {
   results.push(ok);
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${ok ? '' : `\n      status=${status}\n      log=${log.trim()}`}`);
 }
-const fbComment = (id, msg, from = 'u1') => ({ object: 'page', entry: [{ changes: [{ field: 'feed', value: { item: 'comment', verb: 'add', comment_id: id, post_id: 'p1', message: msg, from: { id: from, name: 'Ana' } } }] }] });
-const igComment = (id, text, media = 'media_9', from = 'u2') => ({ object: 'instagram', entry: [{ changes: [{ field: 'comments', value: { id, text, media: { id: media }, from: { id: from, username: 'bo' } } }] }] });
-const dm = (object, sender, text, extra = {}) => ({ object, entry: [{ messaging: [{ sender: { id: sender }, message: { text, ...extra } }] }] });
+const fbComment = (id, msg, from = 'u1', page = 'PAGE') => ({ object: 'page', entry: [{ id: page, changes: [{ field: 'feed', value: { item: 'comment', verb: 'add', comment_id: id, post_id: 'p1', message: msg, from: { id: from, name: 'Ana' } } }] }] });
+const igComment = (id, text, media = 'media_9', from = 'u2', ig = 'IGME') => ({ object: 'instagram', entry: [{ id: ig, changes: [{ field: 'comments', value: { id, text, media: { id: media }, from: { id: from, username: 'bo' } } }] }] });
+const dm = (object, sender, text, extra = {}, id = object === 'instagram' ? 'IGME' : 'PAGE') => ({ object, entry: [{ id, messaging: [{ sender: { id: sender }, message: { text, ...extra } }] }] });
 
 await check('verify handshake', async () => (await fetch(`${url}?hub.mode=subscribe&hub.verify_token=vt&hub.challenge=42`)).text(), (_, s) => s === '42');
 await check('verify rejects bad token', async () => (await fetch(`${url}?hub.mode=subscribe&hub.verify_token=no&hub.challenge=42`)).status, (_, s) => s === 403);
@@ -62,6 +67,12 @@ await check('IG DM "vip" exact → reply', async () => (await post(dm('instagram
 await check('FB DM "vip" → no reply (IG-only rule)', async () => (await post(dm('page', 'u7', 'vip'))).status, log => !log.includes('dry-run'));
 await check('IG DM "vip pass" → no reply (exact match)', async () => (await post(dm('instagram', 'u8', 'vip pass'))).status, log => !log.includes('dry-run'));
 await check('echo of our own message ignored', async () => (await post(dm('page', 'u9', 'guide', { is_echo: true }))).status, log => !log.includes('dry-run'));
+await check('BINGO on First Off → no reply (limited to Tom Swoope Events)', async () => (await post(fbComment('c20', 'bingo!'))).status, log => !log.includes('dry-run'));
+await check('BINGO on Tom Swoope Events FB → sent from PAGE2', async () => (await post(fbComment('c21', 'bingo!', 'u1', 'PAGE2'))).status, log => log.includes('PAGE2/messages') && log.includes('"comment_id":"c21"'));
+await check('IG DM on @tomswoopeevents → reply sent via PAGE2', async () => (await post(dm('instagram', 'u30', 'guide', {}, 'IG2'))).status, log => log.includes('PAGE2/messages') && log.includes('"recipient":{"id":"u30"}'));
+await check('same user DMs guide to another account → not blocked by cooldown', async () => (await post(dm('page', 'u5', 'guide', {}, 'PAGE2'))).status, log => log.includes('PAGE2/messages'));
+await check('comment by one of our own Pages on another → ignored', async () => (await post(fbComment('c22', 'guide', 'PAGE2', 'PAGE'))).status, log => !log.includes('dry-run'));
+await check('event for an account with no token → ignored', async () => (await post(fbComment('c23', 'guide', 'u1', 'OTHER'))).status, log => !log.includes('dry-run') && log.includes('unknown account'));
 
 proc.kill();
 const failed = results.filter(r => !r).length;

@@ -14,9 +14,6 @@ services:
       # Filled in by you in the Render dashboard (never committed):
       - key: APP_SECRET
         sync: false
-      - key: PAGE_ACCESS_TOKEN
-        sync: false
-      - key: PAGE_ID
-        sync: false
-      - key: IG_USER_ID
+      # One Page token per Page, separated by commas or spaces:
+      - key: PAGE_ACCESS_TOKENS
         sync: false
