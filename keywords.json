@@ -2,42 +2,73 @@
   "rules": [
     {
       "keyword": "FAMILY",
+      "aliases": ["insurance", "life insurance", "final expense"],
       "match": "contains",
       "link": "https://takingcareoffamily.com",
-      "message": "Hey {name}! Here's Taking Care Of Family 👇\n{link}",
+      "message": "Hey {name}! Here's Taking Care Of Family, final expense life insurance 👇\n{link}",
       "publicReply": "Sent! Check your DMs 📩",
       "triggers": ["comment", "dm"],
-      "platforms": ["facebook", "instagram"],
-      "postIds": [],
-      "accounts": [],
-      "cooldownMinutes": 10,
-      "enabled": true
+      "cooldownMinutes": 10
     },
     {
-      "keyword": "GUIDE",
-      "aliases": ["the guide"],
+      "keyword": "BOOK",
+      "aliases": ["story time book", "the book"],
+      "match": "exact",
+      "link": "https://book.tomswoopeevents.com",
+      "message": "Hey {name}! Pre-order the signed hardcover of \"Story Time: Dating My Way Thru the Bullsh!t\" here 👇\n{link}",
+      "publicReply": "Sent! Check your DMs 📚",
+      "triggers": ["comment", "dm"],
+      "cooldownMinutes": 10
+    },
+    {
+      "keyword": "MENTOR",
+      "aliases": ["mentorship", "coach", "coaching"],
       "match": "contains",
-      "link": "https://example.com/REPLACE-ME",
-      "message": "Hey {name}! Here's the link you asked for 👇\n{link}",
+      "link": "https://tomswoope.com",
+      "message": "Hey {name}! Here's my business mentorship 👇\n{link}",
       "publicReply": "Sent! Check your DMs 📩",
       "triggers": ["comment", "dm"],
-      "platforms": ["facebook", "instagram"],
-      "postIds": [],
-      "accounts": [],
-      "cooldownMinutes": 10,
-      "enabled": false
+      "cooldownMinutes": 10
     },
     {
-      "keyword": "TICKETS",
-      "match": "contains",
-      "link": "https://example.com/REPLACE-ME-TOO",
-      "message": "Here are the tickets 🎟️\n{link}",
-      "publicReply": "Check your DMs!",
+      "keyword": "BINGO",
+      "aliases": ["events", "tickets", "event"],
+      "match": "exact",
+      "link": "https://tomswoopeevents.com",
+      "message": "Hey {name}! Here are the events and tickets, Hip Hop & R&B Bingo and more 🎟️\n{link}",
+      "publicReply": "Sent! Check your DMs 🎟️",
       "triggers": ["comment", "dm"],
-      "platforms": ["facebook", "instagram"],
-      "postIds": [],
-      "accounts": ["Tom Swoope Events"],
-      "enabled": false
+      "cooldownMinutes": 10
+    },
+    {
+      "keyword": "CRUISE",
+      "aliases": ["r&b cruise", "rnb cruise"],
+      "match": "contains",
+      "link": "https://theauntiesanduncssocialnetwork.com/cruise.html",
+      "message": "Hey {name}! Here's the R&B Cruise info 🚢\n{link}",
+      "publicReply": "Sent! Check your DMs 🚢",
+      "triggers": ["comment", "dm"],
+      "cooldownMinutes": 10
+    },
+    {
+      "keyword": "AUNTIES",
+      "aliases": ["uncs", "network", "social network"],
+      "match": "exact",
+      "link": "https://theauntiesanduncssocialnetwork.com",
+      "message": "Hey {name}! Come join The Aunties & Unc's Social Network 👇\n{link}",
+      "publicReply": "Sent! Check your DMs 📩",
+      "triggers": ["comment", "dm"],
+      "cooldownMinutes": 10
+    },
+    {
+      "keyword": "SUBSCRIBE",
+      "aliases": ["sub"],
+      "match": "exact",
+      "link": "https://www.facebook.com/firstoffinmyopinion/subscribe/",
+      "message": "Hey {name}! Subscribe to First Off In My Opinion here 👇\n{link}",
+      "publicReply": "Sent! Check your DMs 📩",
+      "triggers": ["comment", "dm"],
+      "cooldownMinutes": 10
     }
   ]
 }
