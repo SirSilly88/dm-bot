@@ -1,6 +1,19 @@
 {
   "rules": [
     {
+      "keyword": "FAMILY",
+      "match": "contains",
+      "link": "https://www.facebook.com/61591498496471",
+      "message": "Hey {name}! Here's Taking Care Of Family 👇\n{link}",
+      "publicReply": "Sent! Check your DMs 📩",
+      "triggers": ["comment", "dm"],
+      "platforms": ["facebook", "instagram"],
+      "postIds": [],
+      "accounts": [],
+      "cooldownMinutes": 10,
+      "enabled": true
+    },
+    {
       "keyword": "GUIDE",
       "aliases": ["the guide"],
       "match": "contains",
@@ -12,7 +25,7 @@
       "postIds": [],
       "accounts": [],
       "cooldownMinutes": 10,
-      "enabled": true
+      "enabled": false
     },
     {
       "keyword": "TICKETS",
